@@ -1,9 +1,4 @@
-import {
-  createContext,
-  PropsWithChildren,
-  useContext,
-  useState,
-} from "react";
+import { createContext, PropsWithChildren, useContext, useState } from "react";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import React from "react";
 import { MarkdownType } from "../assets/models/MarkdownType";
@@ -18,6 +13,8 @@ type DocumentContextType = {
   setActiveMarkdown: React.Dispatch<React.SetStateAction<MarkdownType | null>>;
   markdownList: MarkdownType[];
   setMarkdownList: React.Dispatch<React.SetStateAction<MarkdownType[]>>;
+  updateMarkdowns: () => void;
+  deleteMarkdown: (id: number) => void;
 };
 const DocumentContext = createContext<DocumentContextType | undefined>(
   undefined
@@ -55,6 +52,8 @@ export function useMarkdown() {
     setActiveMarkdown: context.setActiveMarkdown,
     markdownList: context.markdownList,
     setMarkdownList: context.setMarkdownList,
+    updateMarkdowns: context.updateMarkdowns,
+    deleteMarkdown: context.deleteMarkdown,
   };
 }
 
@@ -64,13 +63,31 @@ export default function DocumentProvider({ children }: DocumentProviderType) {
   const isTablet = useBreakpoint("tablet");
   const [toggleDocumentSidebar, setToggleDocumentSidebar] = useState(false);
   const [toggleDocumentPreview, setToggleDocumentPreview] = useState(isTablet);
-  const [activeMarkdown, setActiveMarkdown] = useState<MarkdownType | null>(
-    HelloMarkdown
-  );
+
   const [markdownList, setMarkdownList] = useState<MarkdownType[]>(() => {
     const storedFiles = localStorage.getItem("markdownFiles");
     return storedFiles ? JSON.parse(storedFiles) : [HelloMarkdown];
   });
+  const [activeMarkdown, setActiveMarkdown] = useState<MarkdownType | null>(
+    markdownList[0] ?? {}
+  );
+
+  function updateMarkdowns() {
+    const updatedMarkdownList = markdownList.map((markdown) =>
+      markdown.id === activeMarkdown?.id ? activeMarkdown : markdown
+    );
+    saveMarkdowns(updatedMarkdownList);
+  }
+  function deleteMarkdown(id: number) {
+    const updatedMarkdownList = markdownList.filter(
+      (markdown) => markdown.id !== id
+    );
+    saveMarkdowns(updatedMarkdownList);
+  }
+  function saveMarkdowns(updatedMarkdownList: MarkdownType[]) {
+    localStorage.setItem("markdownFiles", JSON.stringify(updatedMarkdownList));
+    setMarkdownList(updatedMarkdownList);
+  }
 
   return (
     <DocumentContext.Provider
@@ -83,6 +100,8 @@ export default function DocumentProvider({ children }: DocumentProviderType) {
         setActiveMarkdown,
         markdownList,
         setMarkdownList,
+        updateMarkdowns,
+        deleteMarkdown,
       }}
     >
       {children}
