@@ -31,7 +31,7 @@ export default function DocumentSidebar() {
                 setMarkdownList((previousMarkdownList) => [
                   ...previousMarkdownList,
                   {
-                    id: previousMarkdownList.length + 1,
+                    id: Date.now(),
                     filename: "untitledss-document.md",
                     content: "# Create your new markdown here!",
                     date: new Date().toDateString(),
