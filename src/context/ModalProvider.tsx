@@ -1,11 +1,9 @@
 import {
   createContext,
   PropsWithChildren,
-  useCallback,
   useContext,
   useState,
 } from "react";
-import { MarkdownType } from "../assets/models/MarkdownType";
 
 type ModalContextType = {
   toggleDeleteModal: boolean;
