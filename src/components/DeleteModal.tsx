@@ -36,7 +36,7 @@ export default function DeleteModal({
         >
           <div className="relative w-full h-full">
             <motion.div
-              className="bg-dark-gray-2 p-6 rounded-md w-[300px] text-white shadow-md absolute"
+              className="bg-documentBodyBg p-6 rounded-md w-[300px] text-txt-clr-1 shadow-md absolute"
               role="document"
               initial={
                 modalAnimation
