@@ -14,11 +14,17 @@ import { MarkdownType } from "../assets/models/MarkdownType";
 export default function FileEditor() {
   const { toggleDocumentSidebar, setToggleDocumentSidebar } =
     useDocumentSidebar();
-  const { activeMarkdown, markdownList, setActiveMarkdown, setMarkdownList } =
-    useMarkdown();
+  const {
+    activeMarkdown,
+    markdownList,
+    setActiveMarkdown,
+    setMarkdownList,
+    updateMarkdowns,
+    deleteMarkdown,
+  } = useMarkdown();
   const { isDeletingMarkdown, toggleDeleteModal, toggleModal, onDelete } =
     useDeleteModal();
-
+  const { isSaveButtonDisabled, notify } = useSaveNotifications();
   useEffect(() => {
     if (isDeletingMarkdown && markdownList.length === 1) {
       setMarkdownList([]);
@@ -66,12 +72,21 @@ export default function FileEditor() {
 
               <DeleteButton
                 activeMarkdown={activeMarkdown}
+                isDeletingMarkdown={isDeletingMarkdown}
                 toggleModal={toggleModal}
+                deleteMarkdown={deleteMarkdown}
               />
             </>
           )}
         </div>
-        {activeMarkdown && <SaveButton />}
+        {activeMarkdown && (
+          <SaveButton
+            isSaveButtonDisabled={isSaveButtonDisabled}
+            activeMarkdown={activeMarkdown}
+            notify={notify}
+            saveMarkdowns={updateMarkdowns}
+          />
+        )}
       </div>
 
       <DeleteModal
@@ -101,7 +116,7 @@ function ActiveMarkdown({
       setLocalFilenameInput(activeMarkdown.filename ?? "");
     }
   }, [activeMarkdown]);
-  
+
   useEffect(() => {
     if (filenameDebounce && activeMarkdown) {
       const isMarkdownFile = /\.md$/i.test(filenameDebounce); // Check if filename ends with .md (case-insensitive)
@@ -128,18 +143,18 @@ function ActiveMarkdown({
   );
 }
 
-function SaveButton() {
-  const { isSaveButtonDisabled, notify } = useSaveNotifications();
-  const { activeMarkdown, markdownList, setMarkdownList } = useMarkdown();
-
-  function saveMarkdowns() {
-    const updatedMarkdownList = markdownList.map((markdown) =>
-      markdown.id === activeMarkdown?.id ? activeMarkdown : markdown
-    );
-    localStorage.setItem("markdownFiles", JSON.stringify(updatedMarkdownList));
-    setMarkdownList(updatedMarkdownList);
-  }
-
+type SaveButtonProps = {
+  isSaveButtonDisabled: boolean;
+  activeMarkdown: MarkdownType;
+  notify: (filename: string) => void;
+  saveMarkdowns: () => void;
+};
+function SaveButton({
+  isSaveButtonDisabled,
+  activeMarkdown,
+  notify,
+  saveMarkdowns,
+}: SaveButtonProps) {
   return (
     <button
       className="self-center p-4 rounded-md bg-vivid-orange lg:flex lg:items-center lg:gap-2 lg:p-3 hover:bg-vivid-orange/50 focus-visible:bg-vivid-orange/50 disabled:bg-vivid-orange/50"
@@ -158,11 +173,25 @@ function SaveButton() {
     </button>
   );
 }
+
 type DeleteButtonType = {
   activeMarkdown: MarkdownType;
+  isDeletingMarkdown: boolean;
   toggleModal: () => void;
+  deleteMarkdown: (id: number) => void;
 };
-function DeleteButton({ activeMarkdown, toggleModal }: DeleteButtonType) {
+function DeleteButton({
+  activeMarkdown,
+  isDeletingMarkdown,
+  toggleModal,
+  deleteMarkdown,
+}: DeleteButtonType) {
+  useEffect(() => {
+    if (isDeletingMarkdown) {
+      deleteMarkdown(activeMarkdown.id);
+    }
+  }, [isDeletingMarkdown]);
+
   return (
     <button
       className="hover:text-vivid-orange text-txt-clr-3 disabled:bg-red-500"
@@ -173,7 +202,9 @@ function DeleteButton({ activeMarkdown, toggleModal }: DeleteButtonType) {
       }
       aria-disabled={!activeMarkdown}
       disabled={!activeMarkdown}
-      onClick={() => toggleModal()}
+      onClick={() => {
+        toggleModal();
+      }}
     >
       <TrashIcon />
     </button>
